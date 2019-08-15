@@ -121,10 +121,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             int imgHeight = bitmap.getHeight();
             Paint paint = new Paint();
             paint.setColor(Color.BLACK);
-            Bitmap resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            height = (int) (imgWidth * 1.0 / width * height);
+            Bitmap resultBitmap = Bitmap.createBitmap(imgWidth, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(resultBitmap);
             canvas.drawRect(0, 0, width, height, paint);
-            canvas.drawBitmap(bitmap, width / 2 - imgWidth / 2, height / 2 - imgHeight / 2, null);
+            canvas.drawBitmap(bitmap, 0, height / 2 - imgHeight / 2, null);
             return resultBitmap;
         }
 
