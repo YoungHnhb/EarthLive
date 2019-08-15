@@ -8,4 +8,12 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="MyTheme_No_Title" parent="Theme.AppCompat.NoActionBar">
+
+    </style>
+    
+    <style name="My_Background" parent="MyTheme_No_Title">
+        <item name="android:windowBackground">@color/colorAccent</item>
+    </style>
+
 </resources>

@@ -1,5 +1,6 @@
 package com.liyy.earthlive;
 
+import android.Manifest;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -11,6 +12,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -21,9 +23,12 @@ import com.liyy.earthlive.tool.DownloadFile;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.List;
+
+import pub.devrel.easypermissions.EasyPermissions;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, EasyPermissions.PermissionCallbacks{
 
     private DownloadFile downloadFile;
     private MergeImageHandler mergeImageHandler;
@@ -43,6 +48,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSetWallPaper = (Button) findViewById(R.id.set_wallpaper);
         mGetWallPaper.setOnClickListener(this);
         mSetWallPaper.setOnClickListener(this);
+        methodRequiresTwoPermission();
+    }
+
+    private void methodRequiresTwoPermission() {
+        String[] perms = {
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.SET_WALLPAPER};
+        if (EasyPermissions.hasPermissions(this, perms)) {
+            // Already have permission, do the thing
+            mergeImageHandler.renderImage();
+        } else {
+            // Do not have permissions, request them now
+            EasyPermissions.requestPermissions(this, "获取文件保存权限", 0, perms);
+        }
     }
 
     @Override
@@ -73,10 +93,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(MainActivity.this);
 //        wallpaperManager.suggestDesiredDimensions(width, height);
         try {
-            wallpaperManager.setBitmap(resultBitmap);
+            wallpaperManager.setBitmap(resultBitmap, null, false, WallpaperManager.FLAG_SYSTEM);
+            wallpaperManager.setBitmap(resultBitmap, null, false, WallpaperManager.FLAG_LOCK);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+        mergeImageHandler.renderImage();
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
+        methodRequiresTwoPermission();
     }
 
     public static class MergeImageHandler extends Handler {
