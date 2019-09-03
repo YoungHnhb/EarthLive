@@ -1,6 +1,9 @@
 package com.liyy.earthlive.service;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.WallpaperManager;
@@ -14,6 +17,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -70,6 +74,36 @@ public class DownloadService extends Service {
     private void startNotification() {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        if (Build.VERSION_CODES.O <= Build.VERSION.SDK_INT) {
+            startNotificationUpper8(pendingIntent);
+        } else {
+            startNotificationBelow8(pendingIntent);
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void startNotificationUpper8(PendingIntent pendingIntent) {
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        String group_id = Constants.NOTIFICATION_GROUP_NAME;
+        NotificationChannelGroup group = new NotificationChannelGroup(group_id, Constants.NOTIFICATION_GROUP_NAME);
+        manager.createNotificationChannelGroup(group);
+        String channel_id = Constants.NOTIFICATION_GROUP_NAME;
+        NotificationChannel channel = new NotificationChannel(channel_id, Constants.NOTIFICATION_GROUP_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription(Constants.NOTIFICATION_GROUP_NAME);
+        channel.setGroup(group_id);
+        manager.createNotificationChannel(channel);
+
+        Notification.Builder notificationBuilder = new Notification.Builder(this, channel_id)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+//                .setTicker("Notification comes")
+                .setWhen(System.currentTimeMillis())
+                .setContentIntent(pendingIntent)
+                .setContentTitle("EarthLive")
+                .setContentText("Last Update Time:" + simpleDateFormat.format(new Date()));
+        startForeground(1, notificationBuilder.build());
+    }
+
+    private void startNotificationBelow8(PendingIntent pendingIntent) {
         Notification.Builder notificationBuilder = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher_background)
 //                .setTicker("Notification comes")
