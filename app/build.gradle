@@ -1,19 +1,66 @@
 apply plugin: 'com.android.application'
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def keyStorePath_ = properties.getProperty("key.keyStorePath")
+def storePassword_ = properties.getProperty("key.storePassword")
+def keyAlias_ = properties.getProperty("key.keyAlias")
+def keyPassword_ = properties.getProperty("key.keyPassword")
+def storeFile_ = file(keyStorePath_)
+
+static def buildTime() {
+    return new Date().format("yyyy-MM-dd HH:mm:ss")
+}
+
+static def hostName() {
+    return System.getProperty("user.name") + "@" + InetAddress.localHost.hostName
+}
+
 android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.liyy.earthlive"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "build_time", "\"" + buildTime() + "\""
     }
+
+    signingConfigs {
+        release {
+            storeFile storeFile_
+            storePassword storePassword_
+            keyAlias keyAlias_
+            keyPassword keyPassword_
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+        debug {
+            storeFile storeFile_
+            storePassword storePassword_
+            keyAlias keyAlias_
+            keyPassword keyPassword_
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    applicationVariants.all { variant ->
+        def buildType = variant.buildType.name
+        def flavorName = variant.flavorName
+        def createTime = new Date().format("YYYY-MM-dd_hh_mm_ss", TimeZone.getTimeZone("GMT+08:00"))
+        variant.outputs.all {
+            outputFileName = flavorName + "_" + buildType + "_v" + defaultConfig.versionName + "_" + createTime + ".apk"
         }
     }
 }

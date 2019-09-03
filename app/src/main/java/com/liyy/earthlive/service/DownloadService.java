@@ -74,15 +74,23 @@ public class DownloadService extends Service {
     private void startNotification() {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        Notification.Builder builder;
         if (Build.VERSION_CODES.O <= Build.VERSION.SDK_INT) {
-            startNotificationUpper8(pendingIntent);
+            builder = startNotificationUpper8();
         } else {
-            startNotificationBelow8(pendingIntent);
+            builder = new Notification.Builder(this);
         }
+        builder.setSmallIcon(R.drawable.ic_launcher_background)
+                .setTicker("Service running")
+                .setWhen(System.currentTimeMillis())
+                .setContentIntent(pendingIntent)
+                .setContentTitle("EarthLive")
+                .setContentText("Last Update Time:" + simpleDateFormat.format(new Date()));
+        startForeground(1, builder.build());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void startNotificationUpper8(PendingIntent pendingIntent) {
+    private Notification.Builder startNotificationUpper8() {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         String group_id = Constants.NOTIFICATION_GROUP_NAME;
         NotificationChannelGroup group = new NotificationChannelGroup(group_id, Constants.NOTIFICATION_GROUP_NAME);
@@ -93,25 +101,8 @@ public class DownloadService extends Service {
         channel.setGroup(group_id);
         manager.createNotificationChannel(channel);
 
-        Notification.Builder notificationBuilder = new Notification.Builder(this, channel_id)
-                .setSmallIcon(R.drawable.ic_launcher_background)
-//                .setTicker("Notification comes")
-                .setWhen(System.currentTimeMillis())
-                .setContentIntent(pendingIntent)
-                .setContentTitle("EarthLive")
-                .setContentText("Last Update Time:" + simpleDateFormat.format(new Date()));
-        startForeground(1, notificationBuilder.build());
-    }
-
-    private void startNotificationBelow8(PendingIntent pendingIntent) {
-        Notification.Builder notificationBuilder = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ic_launcher_background)
-//                .setTicker("Notification comes")
-                .setWhen(System.currentTimeMillis())
-                .setContentIntent(pendingIntent)
-                .setContentTitle("EarthLive")
-                .setContentText("Last Update Time:" + simpleDateFormat.format(new Date()));
-        startForeground(1, notificationBuilder.build());
+        Notification.Builder notificationBuilder = new Notification.Builder(this, channel_id);
+        return notificationBuilder;
     }
 
     private void initReceiver(){
@@ -162,6 +153,7 @@ public class DownloadService extends Service {
     };
 
     private void updateWallpaper(final boolean setWallpaper) {
+        // TODO change to ThreadPool
         new Thread(new DownloadTask(new DownloadCallback() {
             @Override
             public void downloadSuccess(String fileName) {
